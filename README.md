@@ -1,9 +1,9 @@
 # RiotAPI
 A node.js library for fetching League of Legends data from the [Riot API](https://developer.riotgames.com/).
 
-Riot's API requires a API Key. More information about how to get a Key, Rate Limits and more can be found on their [official Site](https://developer.riotgames.com/docs/getting-started).
+Riot's API requires a API Key. More information about how to get a Key, Rate Limits and more can be found on their [official Site](https://developer.riotgames.com/getting-started.html).
 
-Game constants like queue types, maps, game types, game modes and rune slots are explained [here](https://developer.riotgames.com/docs/game-constants).
+Game constants like queue types, maps, game types, game modes and rune slots are explained [here](https://developer.riotgames.com/static-data.html).
 
 ## Getting started
 RiotAPI is designed to be simple.
@@ -20,252 +20,151 @@ Retrieve all champions currently in the game.
 
 #### Options:
 
- - `region` - **string** - Region where to retrieve the data. If no region is given, `NA` will be used. Currently available regions are: `NA`, `EUW`, `EUNE`.
  - `filter` - **object** - (Optional) Filter the result to only get Champions who match the specific options.
-- `active` - **boolean** - Indicates if the champion is active.
-- `rankedPlayEnabled` - **boolean** - Ranked play enabled flag.
-- `botEnabled` - **boolean** - Bot enabled flag (for custom games).
-- `botMmEnabled` - **boolean** - Bot Match Made enabled flag (for Co-op vs. AI games).
-- `freeToPlay` - **boolean** - Indicates if the champion is free to play. Free to play champions are rotated periodically.
-- `attackRank` - **int** - Champion attack rank.
-- `defenseRank` - **int** - Champion defense rank.
-- `difficultyRank` - **int** - Champion difficulty rank.
-- `magicRank` - **int** - Champion magic rank.
-- `id` - **int** - Champion ID.
-- `name` - **string** - Champion name.
+   - The only current option is the option all which can be defined as **true** or **false** to define if you want the amount of champions or all champion data.
+
 
 #### Result:
 
 The Result is a array of objects containing information about the champion. An object might look like this:
 ```javascript
-{
-    "botMmEnabled": false,
-    "defenseRank": 4,
-    "attackRank": 8,
-    "id": 266,
-    "rankedPlayEnabled": true,
-    "name": "Aatrox",
-    "botEnabled": false,
-    "difficultyRank": 6,
-    "active": true,
-    "freeToPlay": false,
-    "magicRank": 3
+{ version: '9.2.1',
+  id: 'Zyra',
+  key: '143',
+  name: 'Zyra',
+  title: 'Rise of the Thorns',
+  blurb:
+   'Born in an ancient, sorcerous catastrophe, Zyra is the wrath of nature given form—an alluring hybrid of plant and human, kindling new life with every step. She views the many mortals of Valoran as little more than prey for her seeded progeny, and thinks...',
+  info: { attack: 4, defense: 3, magic: 8, difficulty: 7 },
+  image:
+   { full: 'Zyra.png',
+     sprite: 'champion4.png',
+     group: 'champion',
+     x: 96,
+     y: 96,
+     w: 48,
+     h: 48 },
+  tags: [ 'Mage', 'Support' ],
+  partype: 'Mana',
+  stats:
+   { hp: 504,
+     hpperlevel: 79,
+     mp: 418,
+     mpperlevel: 25,
+     movespeed: 340,
+     armor: 29,
+     armorperlevel: 3,
+     spellblock: 30,
+     spellblockperlevel: 0.5,
+     attackrange: 575,
+     hpregen: 5.5,
+     hpregenperlevel: 0.5,
+     mpregen: 13,
+     mpregenperlevel: 0.4,
+     crit: 0,
+     critperlevel: 0,
+     attackdamage: 53.376,
+     attackdamageperlevel: 3.2,
+     attackspeedperlevel: 2.11,
+     attackspeed: 0.625 }
 }
 ```
 
 #### Example:
 ```javascript
 api.getChampions({
-    'region': 'NA',
     'filter': {
-        'freeToPlay': true
+        'all': true
     }
 }, function(data) {
-    console.log('These champions are currently free to play:');
-    data.forEach(function(champion) {
-        console.log('Name: ' + champion.name + ', Difficulty: ' + champion.difficultyRank);
-    });
+    for(var champion in data){
+        let champData = data[champion]
+        console.log(champData);
+    }
 });
 ```
-### api.getRecentGames(options, callback)
-Get the recent games for summoner.
 
-#### Options:
-
- - `region` - **string** - Region where to retrieve the data. If no region is given, `NA` will be used. Currently available regions are: `NA`, `EUW`, `EUNE`.
- - `summonerId` - **int** - Summoner ID*.
- - `summonerName` - **string** - Summoner Name*.
-
-*Either Summoner ID or Name is required.
-
-#### Result:
-
-The Result is a object with informations about the recent games of the given summoner. The object is the exact same object given by the default API call, which can be tested [here](https://developer.riotgames.com/api/methods#!/292/1029).
-
-#### Example:
-```javascript
-api.getChampions({
-    'region': 'NA',
-    'summonerName': 'TheOddOne'
-    //-OR-
-    //'summonerId': 60783
-}, function(data) {
-    //process data
-});
-```
 
 ### api.getLeagues(options, callback)
 Retrieves leagues data for summoner, including leagues for all of summoner's teams.
 
 #### Options:
-
- - `region` - **string** - Region where to retrieve the data. If no region is given, `NA` will be used. Currently available regions are: `NA`, `EUW`, `EUNE`, `BR`, `TR`.
- - `summonerId` - **int** - Summoner ID*.
+ - `encryptedSummonerId` - **string** - Encrytpted Summoner Id*.
  - `summonerName` - **string** - Summoner Name*.
- - `queue` - **string** - (Optional) Only recive data for the given queue type. Legal values are: `RANKED_SOLO_5x5`, `RANKED_TEAM_3x3`, `RANKED_TEAM_5x5`.
 
-*Either Summoner ID or Name is required.
+*Either Encrypted Summoner ID or Name is required.
 
 #### Result:
 
-The Result is a object with data about the leagues for the given summoner. The object is the exact same object given by the default API call (except if you only want to recieve a specific queue type), which can be tested [here](https://developer.riotgames.com/api/methods#!/254/959).
+```javascript
+[ { leagueId: '239fc0d0-2353-11e8-b378-c81f66dbb56c',
+    leagueName: 'Jax\'s Enforcers',
+    queueType: 'RANKED_FLEX_SR',
+    position: 'NONE',
+    tier: 'GOLD',
+    rank: 'IV',
+    leaguePoints: 19,
+    wins: 2,
+    losses: 0,
+    veteran: false,
+    inactive: false,
+    freshBlood: false,
+    hotStreak: false,
+    summonerId: 'OAR8pPNKHhDbkfcg_EMt1geroqvY5kaoPSg-1vbEouNIobA',
+    summonerName: 'brTT' },
+  { leagueId: '2b164390-01c3-11e8-b72a-c81f66dbb56c',
+    leagueName: 'Riven\'s Hunters',
+    queueType: 'RANKED_SOLO_5x5',
+    position: 'NONE',
+    tier: 'PLATINUM',
+    rank: 'III',
+    leaguePoints: 0,
+    wins: 5,
+    losses: 9,
+    veteran: false,
+    inactive: false,
+    freshBlood: false,
+    hotStreak: false,
+    summonerId: 'OAR8pPNKHhDbkfcg_EMt1geroqvY5kaoPSg-1vbEouNIobA',
+    summonerName: 'brTT' } ]
+```
 
 #### Example:
 ```javascript
 api.getLeagues({
     'region': 'NA',
-    'queue': 'RANKED_SOLO_5x5',
-    'summonerName': 'TheOddOne'
+    'encryptedSummonerId': 'OAR8pPNKHhDbkfcg_EMt1geroqvY5kaoPSg-1vbEouNIobA'
     //-OR-
-    //'summonerId': 60783
+    //'summonerName': 'brTT'
 }, function(data) {
-    //process data
+    console.log(data);
 });
 ```
 
-### api.getStatsSummary(options, callback)
-Get player stats summaries for summoner.
-
-#### Options:
-
- - `region` - **string** - Region where to retrieve the data. If no region is given, `NA` will be used. Currently available regions are: `NA`, `EUW`, `EUNE`.
- - `summonerId` - **int** - Summoner ID*.
- - `summonerName` - **string** - Summoner Name*.
- - `season` - **int** - (Optional) If specified, stats for the given season are returned. Otherwise, stats for the current season are returned.
-
-*Either Summoner ID or Name is required.
-
-#### Result:
-
-The Result is a object with data about the stats of summoner. The object is the exact same object given by the default API call, which can be tested [here](https://developer.riotgames.com/api/methods#!/294/1035).
-
-#### Example:
-```javascript
-api.getStatsSummary({
-    'region': 'NA',
-    'season': 3,
-    'summonerName': 'TheOddOne'
-    //-OR-
-    //'summonerId': 60783
-}, function(data) {
-    //process data
-});
-```
-
-### api.getRankedStats(options, callback)
-Get ranked stats for summoner. Includes statistics for Twisted Treeline and Summoner's Rift
-
-#### Options:
-
- - `region` - **string** - Region where to retrieve the data. If no region is given, `NA` will be used. Currently available regions are: `NA`, `EUW`, `EUNE`.
- - `summonerId` - **int** - Summoner ID*.
- - `summonerName` - **string** - Summoner Name*.
- - `season` - **int** - (Optional) If specified, stats for the given season are returned. Otherwise, stats for the current season are returned.
-
-*Either Summoner ID or Name is required.
-
-#### Result:
-
-The Result is a object with data about the ranked stats of summoner. The object is the exact same object given by the default API call, which can be tested [here](https://developer.riotgames.com/api/methods#!/294/1035).
-
-#### Example:
-```javascript
-api.getRankedStats({
-    'region': 'NA',
-    'season': 3,
-    'summonerName': 'TheOddOne'
-    //-OR-
-    //'summonerId': 60783
-}, function(data) {
-    //process data
-});
-```
 
 ### api.getMasteries(options, callback)
 Get mastery pages for summoner.
 
 #### Options:
-
- - `region` - **string** - Region where to retrieve the data. If no region is given, `NA` will be used. Currently available regions are: `NA`, `EUW`, `EUNE`.
- - `summonerId` - **int** - Summoner ID*.
+ - `encryptedSummonerId` - **string** - Encrytpted Summoner Id*.
  - `summonerName` - **string** - Summoner Name*.
 
 *Either Summoner ID or Name is required.
 
 #### Result:
-
-The Result is a object with data about the mastery pages of summoner. The object is the exact same object given by the default API call, which can be tested [here](https://developer.riotgames.com/api/methods#!/293/1030).
+```javascript
+44
+```
 
 #### Example:
 ```javascript
 api.getMasteries({
     'region': 'NA',
-    'summonerName': 'TheOddOne'
+    'summonerName': 'brTT'
     //-OR-
-    //'summonerId': 60783
+    // 'encryptedSummonerId': 'OAR8pPNKHhDbkfcg_EMt1geroqvY5kaoPSg-1vbEouNIobA'
 }, function(data) {
-    //process data
-});
-```
-
-### api.getRunes(options, callback)
-Get rune pages for summoner.
-
-#### Options:
-
- - `region` - **string** - Region where to retrieve the data. If no region is given, `NA` will be used. Currently available regions are: `NA`, `EUW`, `EUNE`.
- - `summonerId` - **int** - Summoner ID*.
- - `summonerName` - **string** - Summoner Name*.
-
-*Either Summoner ID or Name is required.
-
-#### Result:
-
-The Result is a object with data about the rune pages of summoner. The object is the exact same object given by the default API call, which can be tested [here](https://developer.riotgames.com/api/methods#!/293/1033).
-
-The `runeSlotId` fields are explained [here](https://s3-us-west-1.amazonaws.com/riot-api/img/rune-slot-ids.png).
-
-#### Example:
-```javascript
-api.getRunes({
-    'region': 'NA',
-    'summonerName': 'TheOddOne'
-    //-OR-
-    //'summonerId': 60783
-}, function(data) {
-    //process data
-});
-```
-
-### api.getSummonerNamesByIds(options, callback)
-Get list of summoner names by summoner IDs.
-
-#### Options:
-
- - `region` - **string** - Region where to retrieve the data. If no region is given, `NA` will be used. Currently available regions are: `NA`, `EUW`, `EUNE`.
- - `summonerIds` - **array[int]** - Summoner ID's.
-
-#### Result:
-
-The Result is an array with objects containing name and id of a summoner. 
-```javascript
-[
-    {
-        "id": 60783,
-        "name": "TheOddOne"
-    },
-    {
-        "id": 5908,
-        "name": "Dyrus"
-    }
-]
-```
-#### Example:
-```javascript
-api.getRunes({
-    'region': 'NA',
-    'summonerIds': [60783, 5908]
-}, function(data) {
+    console.log(data);
     //process data
 });
 ```
@@ -274,61 +173,32 @@ api.getRunes({
 Get basic information about summoner.
 
 #### Options:
+ - `summonerName` - **string** - Summoner Name.
+ - `encryptedSummonerId` - **string** - Encrytpted Summoner Id.
+ - `pUUID` - **string** - Summoner PUUID.
+ - `encryptedAId` - **string** - Encrypted Account ID.
 
- - `region` - **string** - Region where to retrieve the data. If no region is given, `NA` will be used. Currently available regions are: `NA`, `EUW`, `EUNE`.
- - `summonerId` - **int** - Summoner ID*.
- - `summonerName` - **string** - Summoner Name*.
-
-*Either Summoner ID or Name is required.
+One of the options is required
 
 #### Result:
 
 The Result is an object containing basic information of a summoner. 
 ```javascript
-{
-    "id": 60783,
-    "name": "TheOddOne",
-    "profileIconId": 558,
-    "summonerLevel": 30,
-    "revisionDate": 1386684611000,
-    "revisionDateStr": "12/10/2013 02:10 PM UTC"
-}
+{ id: '0B3bFSvYS42z81iwWxb1ipSY0G04hoNep2fy3Gw5jM4',
+  accountId: 'VHUqa9vgdPh1lm1t0R4tmq5wmU4U8P7Shmaxw9viKw',
+  puuid:
+   'hgZu-QeHsvqlN3VRmnjp19b8Rd8T8q3zkk7VkHJWgIQ420tm0y3KDvUB-7GEhLq9Y4DNTln0UvhKgw',
+  name: 'TheOddOne',
+  profileIconId: 3152,
+  revisionDate: 1536048529000,
+  summonerLevel: 33 }
 ```
 #### Example:
 ```javascript
 api.getSummoner({
-    'region': 'NA',
     'summonerName': 'TheOddOne'
-    //-OR-
-    //'summonerId': 60783
 }, function(data) {
-    //process data
-});
-```
-
-### api.getTeams(options, callback)
-Retrieves teams of summoner.
-
-#### Options:
-
- - `region` - **string** - Region where to retrieve the data. If no region is given, `NA` will be used. Currently available regions are: `NA`, `EUW`, `EUNE`, `TR`, `BR`.
- - `summonerId` - **int** - Summoner ID*.
- - `summonerName` - **string** - Summoner Name*.
-
-*Either Summoner ID or Name is required.
-
-#### Result:
-
-The Result is a object with data about the teams of summoner. The object is the exact same object given by the default API call, which can be tested [here](https://developer.riotgames.com/api/methods#!/256/961).
-
-#### Example:
-```javascript
-api.getTeams({
-    'region': 'NA',
-    'summonerName': 'TheOddOne'
-    //-OR-
-    //'summonerId': 60783
-}, function(data) {
-    //process data
+    console.log(data);
+    // process data
 });
 ```

@@ -1,228 +1,201 @@
-var request = require('request');
+let request = require('request');
 
-var RiotApi = module.exports = function(API_KEY) {
-    this.API_KEY = API_KEY;
-    this._cache = {};
-    this.BASE_PATH = 'http://prod.api.pvp.net/api/lol/';
+let RiotApi = module.exports = function (API_KEY) {
+  this.API_KEY = API_KEY;
+  this._cache = {};
+  this.BASE_PATH = 'https://na1.api.riotgames.com/lol/';
 };
 
-RiotApi.prototype.getCachedJSONRequest = function(url, callback) {
-    if(this._cache.hasOwnProperty(url)) {
-        callback(this._cache[url]);
-    }
-    else {
-        var self = this;
-        request({
-            'uri': url,
-            'json': true
-        }, function(error, response, json) {
-            if(!error && response.statusCode === 200) {
-                self._cache[url] = json;
-            }
-            if(response.statusCode === 404) {
-                callback({
-                    "status": {
-                        "message": "Not Found", 
-                        "status_code": 404
-                    }
-                });
-            }
-            else {
-                callback(json);
-            }
+/*
+TODO LIST:
+  - Get encrypted summoner id if we have to do ANYTHING with a players name
+    - https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/<SUMMONER_NAME>?api_key=<API_KEY>
+*/
+
+
+RiotApi.prototype.getCachedJSONRequest = function (url, callback) {
+  if (this._cache.hasOwnProperty(url)) {
+    callback(this._cache[url]);
+  } else {
+    let self = this;
+    request({
+      uri: url,
+      json: true,
+    }, (error, response, json) => {
+
+      if (!error && response.statusCode === 200) {
+        self._cache[url] = json;
+      }
+      if (response.statusCode === 404) {
+        callback({
+          "status": {
+            "message": "Not Found",
+            "status_code": 404
+          }
         });
-    }
-};
-// prod.api.pvp.net/api/lol/'+region+'/v1.3/summoner/by-name/'+name+'?api_key=' + auth.leagueoflegend.key/;
-RiotApi.prototype.getChampions = function(options, callback) {
-    var region = (options.region||'NA').toLowerCase();
-    this.getCachedJSONRequest(this.BASE_PATH + region + '/v1.1/champion?api_key='+this.API_KEY, function(json) {
-        if(json.hasOwnProperty('status')) callback(json);
-        else if(options.hasOwnProperty('filter')) {
-            var filtered = [];
-            json.champions.forEach(function(champion) {
-                var add = true;
-                for (var filter in options.filter) {
-                    if(!champion.hasOwnProperty(filter) || champion[filter] !== options.filter[filter]) {
-                        add = false;
-                    }
-                }
-                if(add) filtered.push(champion);
-            });
-            callback(filtered);
-        }
-        else {
-            callback(json.champions);
-        }
+      } else {
+        callback(json);
+      }
     });
+  }
 };
 
-RiotApi.prototype.getRecentGames = function(options, callback) {
-    var region = (options.region||'NA').toLowerCase();
-    if(options.hasOwnProperty('summonerId')) {
-        this.getCachedJSONRequest(this.BASE_PATH + region + '/v1.3/game/by-summoner/' + options.summonerId + '/recent?api_key='+this.API_KEY, callback);
+// NOTE: Champions are now static and found in a CDN(http://ddragon.leagueoflegends.com/cdn/6.24.1/data/en_US/champion.json) which the version number is dynamic
+// TODO: Get a dynamic version number for faster implementation
+// OLD: prod.api.pvp.net/api/lol/'+region+'/v1.3/summoner/by-name/'+name+'?api_key=' + auth.leagueoflegend.key/;
+RiotApi.prototype.getChampions = function (options, callback) {
+
+  if (options.hasOwnProperty('filter')) {
+    if (options.filter.hasOwnProperty('all')) {
+      this.getCachedJSONRequest('http://ddragon.leagueoflegends.com/cdn/9.2.1/data/en_US/champion.json', (json) => {
+        if (json.hasOwnProperty('status')) callback(json);
+        callback(json.data);
+
+      });
     }
-    else if(options.hasOwnProperty('summonerName')) {
-        var self = this;
-        this.getSummoner(options, function(json) {
-            if(json.hasOwnProperty('status')) callback(json);
-            else {
-                self.getCachedJSONRequest(self.BASE_PATH + region + '/v1.3/game/by-summoner/' + json.id + '/recent?api_key='+self.API_KEY, callback);
-            }
-        });
-    }
-    else {
-        callback({});
-    }
+  } else {
+    this.getCachedJSONRequest('http://ddragon.leagueoflegends.com/cdn/9.2.1/data/en_US/champion.json', (json) => {
+      if (json.hasOwnProperty('status')) callback(json);
+      callback(Object.keys(json.data));
+
+    });
+  }
 };
 
-RiotApi.prototype.getSummoner = function(options, callback) {
-    var region = (options.region||'NA').toLowerCase();
-    if(options.hasOwnProperty('summonerId')) {
-        this.getCachedJSONRequest(this.BASE_PATH + region + '/v1.3/summoner/' + options.summonerId + '?api_key='+this.API_KEY, callback);
-    }
-    else if(options.hasOwnProperty('summonerName')) {
-       this.getCachedJSONRequest(this.BASE_PATH + region + '/v1.3/summoner/by-name/' + options.summonerName + '?api_key='+this.API_KEY, callback);
-   }
-   else {
+RiotApi.prototype.getRecentGames = function (options, callback) {
+  let region = (options.region || 'NA').toLowerCase();
+  if (options.hasOwnProperty('summonerId')) {
+    this.getCachedJSONRequest(`${this.BASE_PATH + region  }/v1.3/game/by-summoner/${  options.summonerId  }/recent?api_key=${  this.API_KEY}`, callback);
+  } else if (options.hasOwnProperty('summonerName')) {
+    let self = this;
+    this.getSummoner(options, (json) => {
+      if (json.hasOwnProperty('status')) callback(json);
+      else {
+        self.getCachedJSONRequest(self.BASE_PATH + region + '/v1.3/game/by-summoner/' + json.id + '/recent?api_key=' + self.API_KEY, callback);
+      }
+    });
+  } else {
     callback({});
-}
+  }
 };
 
-RiotApi.prototype.getLeagues = function(options, callback) {
-    var region = (options.region||'NA').toLowerCase();
-    if(options.hasOwnProperty('summonerId')) {
-        this.getCachedJSONRequest(this.BASE_PATH + region + '/v2.3/league/by-summoner/' + options.summonerId + '?api_key='+this.API_KEY, function(json) {
-            if(json.hasOwnProperty('status')) callback(json);
-            else if(options.hasOwnProperty('queue')) {
-                for(var type in json) {
-                    if(json[type].queue === options.queue) {
-                        return callback(json[type]);
-                    }
-                }
-                return callback({});
-            }
-            else {
-                callback(json);
-            }
-        });
-    }
-    else if(options.hasOwnProperty('summonerName')) {
-        var self = this;
-        this.getSummoner(options, function(json) {
-            if(json.hasOwnProperty('status')) callback(json);
-            else {
-                self.getCachedJSONRequest(self.BASE_PATH + region + '/v2.3/league/by-summoner/' + json.id + '?api_key='+self.API_KEY, function(json) {
-                    if(error || json.hasOwnProperty('status')) callback(json);
-                    else if(options.hasOwnProperty('queue')) {
-                        for(var type in json) {
-                            if(json[type].queue === options.queue) {
-                                return callback(json[type]);
-                            }
-                        }
-                        return callback({});
-                    }
-                    else {
-                        callback(json);
-                    }
-                });
-            }
-        });
-    }
-    else {
-        callback({});
-    }
+
+// DONE:
+RiotApi.prototype.getSummoner = function (options, callback) {
+  /*
+    GET /lol/summoner/v4/summoners/by-name/{summonerName} Get a summoner by summoner name.
+    GET /lol/summoner/v4/summoners/by-account/{encryptedAccountId} Get a summoner by account ID.
+    GET /lol/summoner/v4/summoners/by-puuid/{encryptedPUUID} Get a summoner by PUUID.
+    GET /lol/summoner/v4/summoners/{encryptedSummonerId}
+    */
+
+  if (options.hasOwnProperty('summonerName')) {
+    this.getCachedJSONRequest(`${this.BASE_PATH  }summoner/v4/summoners/by-name/${  options.summonerName  }?api_key=${  this.API_KEY}`, callback);
+  } else if (options.hasOwnProperty('encryptedAId')) {
+    this.getCachedJSONRequest(`${this.BASE_PATH  }summoner/v4/summoners/by-account/${  options.encryptedAID  }?api_key=${  this.API_KEY}`, callback);
+  } else if (options.hasOwnProperty('pUUID')) {
+    this.getCachedJSONRequest(`${this.BASE_PATH  }summoner/v4/summoners/by-puuid/${  options.pUUID  }?api_key=${  this.API_KEY}`, callback);
+  } else if (options.hasOwnProperty('encSummonerId')) {
+    this.getCachedJSONRequest(`${this.BASE_PATH  }summoner/v4/summoners/${  options.encSummonerId  }?api_key=${  this.API_KEY}`, callback);
+  } else {
+    callback({});
+  }
 };
 
-RiotApi.prototype.getStatsSummary = function(options, callback) {
-    var region = (options.region||'NA').toLowerCase();
-    var season = options.season ? ('SEASON'+options.season) : '';
-    if(options.hasOwnProperty('summonerId')) {
-        this.getCachedJSONRequest(this.BASE_PATH + region + '/v1.2/stats/by-summoner/' + options.summonerId + '/summary?season=' + season + '&api_key='+this.API_KEY, callback);
-    }
-    else if(options.hasOwnProperty('summonerName')) {
-        var self = this;
-        this.getSummoner(options, function(json) {
-            self.getCachedJSONRequest(self.BASE_PATH + region + '/v1.2/stats/by-summoner/' + json.id + '/summary?season=' + season + '&api_key='+self.API_KEY, callback);
-        });
-    }
-    else {
-        callback({});
-    }
-};
 
-RiotApi.prototype.getRankedStats = function(options, callback) {
-    var region = (options.region||'NA').toLowerCase();
-    var season = options.season ? ('SEASON'+options.season) : '';
-    if(options.hasOwnProperty('summonerId')) {
-        this.getCachedJSONRequest(this.BASE_PATH + region + '/v1.2/stats/by-summoner/' + options.summonerId + '/ranked?season=' + season + '&api_key='+this.API_KEY, callback);
-    }
-    else if(options.hasOwnProperty('summonerName')) {
-        var self = this;
-        this.getSummoner(options, function(json) {
-            self.getCachedJSONRequest(self.BASE_PATH + region + '/v1.2/stats/by-summoner/' + json.id + '/ranked?season=' + season + '&api_key='+self.API_KEY, callback);
-        });
-    }
-    else {
-        callback({});
-    }
-};
-
-RiotApi.prototype.getMasteries = function(options, callback) {
-    var region = (options.region||'NA').toLowerCase();
-    if(options.hasOwnProperty('summonerId')) {
-        this.getCachedJSONRequest(this.BASE_PATH + region + '/v1.3/summoner/' + options.summonerId + '/masteries?api_key='+this.API_KEY, callback);
-    }
-    else if(options.hasOwnProperty('summonerName')) {
-        var self = this;
-        this.getSummoner(options, function(json) {
-            self.getCachedJSONRequest(self.BASE_PATH + region + '/v1.3/summoner/' + json.id + '/masteries?api_key='+self.API_KEY, callback);
-        });
-    }
-    else {
-        callback({});
-    }
-};
-
-RiotApi.prototype.getRunes = function(options, callback) {
-    var region = (options.region||'NA').toLowerCase();
-    if(options.hasOwnProperty('summonerId')) {
-        this.getCachedJSONRequest(this.BASE_PATH + region + '/v1.3/summoner/' + options.summonerId + '/runes?api_key='+this.API_KEY, callback);
-    }
-    else if(options.hasOwnProperty('summonerName')) {
-        var self = this;
-        this.getSummoner(options, function(json) {
-            self.getCachedJSONRequest(self.BASE_PATH + region + '/v1.3/summoner/' + json.id + '/runes?api_key='+self.API_KEY, callback);
-        });
-    }
-    else {
-        callback({});
-    }
-};
-
-RiotApi.prototype.getSummonerNamesByIds = function(options, callback) {
-    var region = (options.region||'NA').toLowerCase();
-    var summonerIds = (options.summonerIds||[]).join(',');
-    this.getCachedJSONRequest(this.BASE_PATH + region + '/v1.3/summoner/' + summonerIds + '/name?api_key='+this.API_KEY, function(json) {
-        if(json.hasOwnProperty('status')) callback(json);
-        else {
-            callback(json.summoners);
-        }
+// DONE:
+RiotApi.prototype.getLeagues = function (options, callback) {
+  if (options.hasOwnProperty('encryptedSummonerId')) {
+    this.getCachedJSONRequest(`${this.BASE_PATH}league/v4/positions/by-summoner/${  options.encryptedSummonerId  }?api_key=${  this.API_KEY}`, (json) => {
+      if (json.hasOwnProperty('status')) callback(json);
+      else {
+        callback(json)
+      }
     });
+  } else if (options.hasOwnProperty('summonerName')) {
+    let self = this;
+    this.getSummoner(options, (json) => {
+      if (json.hasOwnProperty('status')) callback(json);
+      else {
+        let encID = json.id;
+        self.getCachedJSONRequest(`${this.BASE_PATH}league/v4/positions/by-summoner/${ encID }?api_key=${  this.API_KEY}`, (json) => {
+          if (json.hasOwnProperty('status')) callback(json);
+          else {
+            callback(json)
+          }
+        });
+      }
+    });
+  } else {
+    callback({});
+  }
 };
 
-RiotApi.prototype.getTeams = function(options, callback) {
-    var region = (options.region||'NA').toLowerCase();
-    if(options.hasOwnProperty('summonerId')) {
-        this.getCachedJSONRequest(this.BASE_PATH + region + '/v2.2/team/by-summoner/' + options.summonerId + '?api_key='+this.API_KEY, callback);
+
+// NOTE: THIS IS DEPRECATED 
+RiotApi.prototype.getStatsSummary = function (options, callback) {
+  callback({
+    "status": {
+      "message": "Deprecated - Not Acceptable",
+      "status_code": 406
     }
-    else if(options.hasOwnProperty('summonerName')) {
-        var self = this;
-        this.getSummoner(options, function(json) {
-            self.getCachedJSONRequest(self.BASE_PATH + region + '/v2.2/team/by-summoner/' + json.id + '?api_key='+self.API_KEY, callback);
-        });
+  });
+};
+
+// NOTE: THIS IS DEPRECATED 
+RiotApi.prototype.getRankedStats = function (options, callback) {
+  callback({
+    "status": {
+      "message": "Deprecated - Not Acceptable",
+      "status_code": 406
     }
-    else {
-        callback({});
+  });
+};
+
+// DONE:
+RiotApi.prototype.getMasteries = function (options, callback) {
+  if (options.hasOwnProperty('encryptedSummonerId')) {
+    this.getCachedJSONRequest(`${this.BASE_PATH }champion-mastery/v4/scores/by-summoner/${  options.encryptedSummonerId  }?api_key=${  this.API_KEY}`, callback);
+  } else if (options.hasOwnProperty('summonerName')) {
+    this.getSummoner(options, (json) => {
+      if (json.hasOwnProperty('status')) callback(json);
+      else {
+        let encID = json.id;
+        this.getCachedJSONRequest(`${this.BASE_PATH }champion-mastery/v4/scores/by-summoner/${  encID }?api_key=${  this.API_KEY}`, callback);
+      }
+    });
+  } else {
+    callback({});
+  }
+};
+
+
+// NOTE: THIS IS DEPRECATED
+RiotApi.prototype.getRunes = function (options, callback) {
+  callback({
+    "status": {
+      "message": "Deprecated - Not Acceptable",
+      "status_code": 406
     }
+  });
+};
+
+// NOTE: THIS IS DEPRECATED
+RiotApi.prototype.getSummonerNamesByIds = function (options, callback) {
+  callback({
+    "status": {
+      "message": "Deprecated - Not Acceptable",
+      "status_code": 406
+    }
+  });
+};
+
+// NOTE: THIS IS DEPRECATED
+RiotApi.prototype.getTeams = function (options, callback) {
+  callback({
+    "status": {
+      "message": "Deprecated - Not Acceptable",
+      "status_code": 406
+    }
+  });
 };
