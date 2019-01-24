@@ -1,15 +1,18 @@
 {
     "name": "riot-api-rework",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Riot Games API library",
     "license": "ISC",
-    "contributors": [{
-        "name": "Austin McCalley",
-        "email": "mrmcaustin1@gmail.com"
-    }, {
-        "name": "Martin Rump",
-        "email": "admin@maddin.cc"
-    }],
+    "contributors": [
+        {
+            "name": "Austin McCalley",
+            "email": "mrmcaustin1@gmail.com"
+        },
+        {
+            "name": "Martin Rump",
+            "email": "admin@maddin.cc"
+        }
+    ],
     "homepage": "https://github.com/Mr-Que/riot-api",
     "keywords": [
         "API",
