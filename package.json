@@ -1,13 +1,14 @@
 {
-    "name": "riot-api",
-    "version": "0.1.0",
+    "name": "riot-api-rework",
+    "version": "0.0.1",
     "description": "Riot Games API library",
+    "license": "ISC",
     "contributors": [{
-        "name": "Martin Rump",
-        "email": "admin@maddin.cc"
-    }, {
         "name": "Austin McCalley",
         "email": "mrmcaustin1@gmail.com"
+    }, {
+        "name": "Martin Rump",
+        "email": "admin@maddin.cc"
     }],
     "homepage": "https://github.com/Mr-Que/riot-api",
     "keywords": [
@@ -31,10 +32,5 @@
     "engines": {
         "node": ">=10.14.1",
         "npm": ">=6.6.0"
-    },
-    "devDependencies": {
-        "eslint": "^5.12.1",
-        "eslint-config-airbnb-base": "^13.1.0",
-        "eslint-plugin-import": "^2.15.0"
     }
 }
