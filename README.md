@@ -1,4 +1,6 @@
 # RiotAPI
+[![Known Vulnerabilities](https://snyk.io/test/github/Mr-Que/riot-api/badge.svg?targetFile=package.json)](https://snyk.io/test/github/Mr-Que/riot-api?targetFile=package.json)
+
 A node.js library for fetching League of Legends data from the [Riot API](https://developer.riotgames.com/).
 
 Riot's API requires a API Key. More information about how to get a Key, Rate Limits and more can be found on their [official Site](https://developer.riotgames.com/getting-started.html).
